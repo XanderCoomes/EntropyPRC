@@ -1,7 +1,8 @@
 # Design.md
 
 ## PRC Functions
-PRC Class
+
+PRC Class: 
  - gen_keys(codeword_len, sparsity, secret_len, num_parity_checks) --> parity_check_matrix, generator_matrix, one_time_pad, permutation
     - sample_parity_check_matrix(codeword_len, sparsity, num_parity_checks) --> parity_check_matrix
     - sample_generator_matrix(parity_check_matrix, secret_len) --> generator_matrix

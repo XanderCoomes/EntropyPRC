@@ -1,19 +1,22 @@
 # Design.md
-
 ## PRC Functions
-
 PRC Class: 
- - gen_keys(codeword_len, sparsity, secret_len, num_parity_checks) --> parity_check_matrix, generator_matrix, one_time_pad, permutation
-    - sample_parity_check_matrix(codeword_len, sparsity, num_parity_checks) --> parity_check_matrix
-    - sample_generator_matrix(parity_check_matrix, secret_len) --> generator_matrix
-    - sample_one_time_pad(codeword_len) --> one_time_pad
-    - sample_permutation(codeword_len) --> permutation
-
- - encode(generator_matrix, one_time_pad, permutation, noise_rate) --> codeword
-    - sample_random_secret(secret_len) --> random_secret
-
- - decode(parity_check_matrix, bit_string, one_time_pad, permutation, false_positive_rate) --> is_codeword
-    - calc_parity_check_threshold(false_positive_rate, codeword_len, num_parity_checks) --> threshold
+Fields
+ - codeword_len
+ - sparsity
+ - secret_len
+ - num_parity_checks
+ - parity_check_matrix
+ - generator_matrix
+ - one_time_pad
+ - permutation
+ 
+Methods
+ - key_gen()
+ - sample_parity_check_matrix()
+ - sample_generator_matrix()
+ - encode(noise_rate)
+ - decode(bit_str, false_positive_rate)
 
 ## Sampling Functions
  - logits(model, tokens) --> logits

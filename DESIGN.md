@@ -29,13 +29,13 @@ Fields
  - no_repetition_penalty
  
 Methods
- - logits(tokens) --> logits
- - repetition_penalty(logits, tokens, repetition_penalty) --> logits
- - no_repeat_n_gram (logits, tokens, n_gram_penalty) --> logits
- - temperature(logits, temperature) --> logits
- - probs(logits) --> probs
- - top_p(probs, p) --> probs
- - entropy(probs) --> entropy
+ - calc_logits(tokens) --> logits
+ - apply_repetition_penalty(logits, tokens, repetition_penalty) --> logits
+ - apply_no_repeat_n_gram (logits, tokens, n_gram_penalty) --> logits
+ - apply_temperature(logits, temperature) --> logits
+ - calc_probs(logits) --> probs
+ - apply_top_p(probs, p) --> probs
+ - calc_entropy(probs) --> entropy
 
 ## Watermarking Functions
 WatermarkedLLM Class: 

@@ -1,2 +1,7 @@
+# Technical
 numpy
 galois
+
+
+# Development
+-e .

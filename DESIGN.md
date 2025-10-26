@@ -19,7 +19,7 @@ Methods
  - decode(bit_str, false_positive_rate)
 
 ## Sampling Functions
-Model Class: 
+Sampler Class: 
 Fields
  - tokenizer
  - model
@@ -38,6 +38,11 @@ Methods
  - entropy(probs) --> entropy
 
 ## Watermarking Functions
+WatermarkedLLM Class: 
+Fields
+ - sampler
+
+Methods
  - bias_probs(probs, hash_func, bit) --> probs
  - token_hash(tokens, hash_func) --> bit_string
  - gen_output(prompt, num_tokens, water_parameters, sampling_parameters) --> tokens 

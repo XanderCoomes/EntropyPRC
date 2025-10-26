@@ -19,8 +19,18 @@ Methods
  - decode(bit_str, false_positive_rate)
 
 ## Sampling Functions
- - logits(model, tokens) --> logits
- - no_repetition_penalty(logits, tokens, repetition_penalty) --> logits
+Model Class: 
+Fields
+ - tokenizer
+ - model
+ - temperature
+ - top_p
+ - no_repeat_ngram
+ - no_repetition_penalty
+ 
+Methods
+ - logits(tokens) --> logits
+ - repetition_penalty(logits, tokens, repetition_penalty) --> logits
  - no_repeat_n_gram (logits, tokens, n_gram_penalty) --> logits
  - temperature(logits, temperature) --> logits
  - probs(logits) --> probs
@@ -32,7 +42,7 @@ Methods
  - token_hash(tokens, hash_func) --> bit_string
  - gen_output(prompt, num_tokens, water_parameters, sampling_parameters) --> tokens 
     - prompt_to_tokens(prompt) --> tokens
-- detect_watermark(output, water_parmeters, sampling_parameters) --> is_watermarked
+ - detect_watermark(output, water_parmeters, sampling_parameters) --> is_watermarked
 
 
 

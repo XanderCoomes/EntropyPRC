@@ -10,15 +10,15 @@ class PRC:
         self.secret_len = secret_len
         self.num_parity_checks = num_parity_checks
 
-        self._key_gen()
+        self.key_gen()
 
-    def _key_gen(self):
-        self._sample_parity_check_matrix()
-        self._sample_generator_matrix()
+    def key_gen(self):
+        self.sample_parity_check_matrix()
+        self.sample_generator_matrix()
         self.one_time_pad = GF.Random(self.codeword_len)
         self.permutation = np.random.permutation(self.codeword_len)
 
-    def _sample_parity_check_matrix(self): 
+    def sample_parity_check_matrix(self): 
         self.parity_check_matrix = np.zeros((self.num_parity_checks, self.codeword_len), dtype = int)
         for i in range (self.num_parity_checks):
             sparse_row = np.zeros(self.codeword_len, dtype=int)
@@ -27,7 +27,7 @@ class PRC:
             self.parity_check_matrix[i] = sparse_row 
         self.parity_check_matrix = GF(self.parity_check_matrix)
 
-    def _sample_generator_matrix(self): 
+    def sample_generator_matrix(self): 
         null_space = self.parity_check_matrix.null_space()
         null_space = null_space.T 
         self.generator_matrix = np.zeros((self.codeword_len, self.secret_len), dtype = int)
@@ -44,12 +44,11 @@ class PRC:
         permuted_codeword = codeword[self.permutation]
         return permuted_codeword
     
-    def _calc_threshold(self, false_positive_rate):
+    def calc_threshold(self, false_positive_rate):
         return (0.5 - (self.num_parity_checks ** (-0.25))) * self.num_parity_checks; 
 
     def decode(self, bit_str, false_positive_rate):
-        threshold = self._calc_threshold(false_positive_rate)
-        
+        threshold = self.calc_threshold(false_positive_rate)
         inv_perm = np.empty_like(self.permutation)
         inv_perm[self.permutation] = np.arange(len(self.permutation))   
 

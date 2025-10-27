@@ -11,9 +11,9 @@ class PRC:
         self.secret_len = secret_len_fn(codeword_len)
         self.num_parity_checks = num_parity_checks_fn(codeword_len)
 
-        self.key_gen()
+        self.gen_key()
 
-    def key_gen(self):
+    def gen_key(self):
         self.sample_parity_check_matrix()
         self.sample_generator_matrix()
         self.one_time_pad = GF.Random(self.codeword_len)

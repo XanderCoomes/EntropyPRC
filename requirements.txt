@@ -1,6 +1,12 @@
-# Technical
+# PRC
 numpy
 galois
+
+
+# Sampler
+torch
+transformers
+accelerate
 
 
 # Development

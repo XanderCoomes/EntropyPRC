@@ -11,7 +11,7 @@ def num_parity_checks_fn(codeword_len):
     return int(0.99 * codeword_len)
 
 
-class PRCTest:
+class PRCTester:
     def __init__(self, prc): 
         self.prc = prc
     def test_key_gen(self): 
@@ -27,7 +27,7 @@ class PRCTest:
 if __name__ == "__main__":
     codeword_len = 300
     prc = PRC(codeword_len, sparsity_fn, secret_len_fn, num_parity_checks_fn)
-    tester = PRCTest(prc)
+    tester = PRCTester(prc)
     tester.test_key_gen()
 
     false_positive_rate = 1e-6
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     noise_rate = 0.0
     tester.test_encode_decode(noise_rate, false_positive_rate)
 
-    noise_rate = 0.15
+    noise_rate = 0.5
     tester.test_encode_decode(noise_rate, false_positive_rate)
     
 

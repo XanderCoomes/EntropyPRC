@@ -1,15 +1,15 @@
 import numpy as np
 import galois
-from typing import Callable
+
 
 GF = galois.GF(2)
 
-class PRC: 
-    def __init__(self, codeword_len, sparsity_fn, secret_len_fn, num_parity_checks_fn): 
+class PRC:
+    def __init__(self, codeword_len, sparsity_fn): 
         self.codeword_len = codeword_len
         self.sparsity = sparsity_fn(codeword_len)
-        self.secret_len = secret_len_fn(codeword_len)
-        self.num_parity_checks = num_parity_checks_fn(codeword_len)
+        self.secret_len = pow(self.sparsity, 2)
+        self.num_parity_checks = int(0.99 * self.codeword_len)
 
         self.gen_key()
 
@@ -60,4 +60,6 @@ class PRC:
             return True;
         else:
             return False; 
+    
+   
 

@@ -25,29 +25,28 @@ Fields
  - model
  - temperature
  - top_p
- - no_repeat_ngram
  - no_repetition_penalty
  
 Methods
- - calc_logits(tokens) --> logits
- - apply_repetition_penalty(logits, tokens, repetition_penalty) --> logits
- - apply_no_repeat_n_gram (logits, tokens, n_gram_penalty) --> logits
- - apply_temperature(logits, temperature) --> logits
- - calc_probs(logits) --> probs
- - apply_top_p(probs, p) --> probs
+ - calc_probs(tokens) --> probs
+   - calc_logits(tokens) --> logits
+   - apply_repetition_penalty(logits, tokens, repetition_penalty) --> logits
+   - apply_temperature(logits, temperature) --> logits
+   - softmax(logits) --> probs
+   - apply_top_p(probs, p) --> probs
  - calc_entropy(probs) --> entropy
 
 ## Watermarking Functions
-WatermarkedLLM Class: 
+WaterLLM Class: 
 Fields
  - sampler
 
 Methods
  - bias_probs(probs, hash_func, bit) --> probs
  - token_hash(tokens, hash_func) --> bit_string
- - gen_output(prompt, num_tokens, water_parameters, sampling_parameters) --> tokens 
+ - gen_response(prompt, num_tokens, water_parameters, sampling_parameters) --> tokens 
     - prompt_to_tokens(prompt) --> tokens
- - detect_watermark(output, water_parmeters, sampling_parameters) --> is_watermarked
+ - detect_water(output, water_parmeters, sampling_parameters) --> is_watermarked
 
 
 

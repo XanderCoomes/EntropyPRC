@@ -15,7 +15,7 @@ class Sampler:
         logits, past_key_vals = self.calc_logits(generated_token_ids, past_key_vals)
         logits = self.apply_repetition_penalty(generated_token_ids, logits)
         logits = self.apply_temperature(logits)
-        probs = self.softmax(probs)
+        probs = self.softmax(logits)
         probs = self.apply_top_p(probs)
         return probs, past_key_vals
         
@@ -64,6 +64,10 @@ class Sampler:
     def text_to_ids(self, text): 
         token_ids = self.tokenizer.encode(text, return_tensors="pt")
         return token_ids
+    
+    def ids_to_text(self, token_ids): 
+        text = self.tokenizer.decode(token_ids[0].tolist(), skip_special_tokens=True, clean_up_tokenization_spaces=True)
+        return text
     
 
 

@@ -5,7 +5,7 @@ import torch
 import numpy as np
 
 def sparsity_fn(codeword_len):
-    return int(np.log2(codeword_len))
+    return int(np.log10(codeword_len))
 
 def hash_fn(token_id): 
     return token_id % 2
@@ -15,11 +15,16 @@ class WaterLLMTester:
         self.llm = llm
     
     def test_generation(self, prompt, num_tokens, is_water): 
-        self.llm.gen_response(prompt, num_tokens, is_water)
+        response = self.llm.gen_response(prompt, num_tokens, is_water)
+        return response
+    
+    def test_detection(self, response): 
+        is_water = self.llm.detect_water(response)
+        return is_water
 
 
 if __name__ == "__main__":
-    temperature = 0.7
+    temperature = 1.0
     repetition_penalty = 1.0
     top_p = 0.8
 
@@ -31,7 +36,9 @@ if __name__ == "__main__":
     key_folder = "./keys"
     llm = WaterLLM(sampler, hash_fn, sparsity_fn, key_folder)
     water_tester = WaterLLMTester(llm)
-    water_tester.test_generation("write a short poem", 50, True)
+    response = water_tester.test_generation("write a short poem", 200, True)
+    assert(water_tester.test_detection(response) == True)
+
 
 
 

@@ -17,6 +17,7 @@ class Sampler:
         logits = self.apply_temperature(logits)
         probs = self.softmax(logits)
         probs = self.apply_top_p(probs)
+        probs = probs.squeeze(0)
         return probs, past_key_vals
         
     def calc_logits(self, generated_token_ids, past_key_vals): 
@@ -36,7 +37,7 @@ class Sampler:
         return probs
 
     def sample(self, probs): 
-        next_token = torch.multinomial(probs.float(), num_samples=1) 
+        next_token = torch.multinomial(probs.float(), num_samples = 1) 
         token_id = next_token.item()
         return token_id
     

@@ -50,11 +50,15 @@ class PRC:
 
     def decode(self, bit_str, false_positive_rate):
         threshold = self.calc_threshold(false_positive_rate)
+        print("num parity checks: ", self.num_parity_checks)
+        print("threshold: ", threshold)
         inv_perm = np.empty_like(self.permutation)
         inv_perm[self.permutation] = np.arange(len(self.permutation))   
 
         permuted_bit_str = GF(bit_str[inv_perm]) + self.one_time_pad
         failed_parity_checks = np.sum ((self.parity_check_matrix @ permuted_bit_str) == 1)
+        print("failed parity checks: ", failed_parity_checks)
+
 
         if(failed_parity_checks < threshold):
             return True;

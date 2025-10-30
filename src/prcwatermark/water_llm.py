@@ -38,6 +38,7 @@ class WaterLLM:
         generated_ids = self.sampler.text_to_ids(prompt)
         prompt_tokens = generated_ids.squeeze(0).shape[0]
         past_key_values = None
+        encoding_error_rate = 0.0
 
         for i in range(num_tokens):
             probs, past_key_values = self.sampler.calc_probs(generated_ids, past_key_values)
@@ -49,15 +50,20 @@ class WaterLLM:
             if(self.hash_fn(next_token_id) == codeword[i]):
                 print(f"\033[42m{next_token}\033[0m", end = '', flush = True)
             else:
+                encoding_error_rate += 1
                 print(f"\033[41m{next_token}\033[0m", end = '', flush = True)
         
         response = self.sampler.ids_to_text(generated_ids[:, prompt_tokens:])
+        print(f"\nEncoding Error Rate: {encoding_error_rate / num_tokens:.2%} \n")
         return response
 
     def detect_water (self, response): 
         generated_ids = self.sampler.text_to_ids(response)
         generated_ids = generated_ids.squeeze(0)
         codeword_len = len(generated_ids)
+        if(self.prc_exists(codeword_len) == False):
+            print(f"PRC of Codeword Length {codeword_len} does not exist.")
+            return False
         bit_str = [self.hash_fn(generated_ids[i]) for i in range(codeword_len)]
         bit_str = np.fromiter(bit_str, dtype = np.uint8, count = codeword_len)
         print(bit_str)
@@ -74,11 +80,15 @@ class WaterLLM:
         with open(folder / self.prc_file_name(prc.codeword_len), "wb") as f:
             pickle.dump(prc, f, protocol = pickle.HIGHEST_PROTOCOL)
 
-  
+    def prc_exists(self, codeword_len):
+        file_name = self.prc_file_name(codeword_len)
+        file_path = Path(self.key_folder) / file_name
+        return file_path.exists()
+    
     def load_prc(self, codeword_len): 
         file_name = self.prc_file_name(codeword_len)
         file_path = Path(self.key_folder) / file_name
-        if(file_path.exists()):
+        if(self.prc_exists(codeword_len)):
             with open(Path(file_path), "rb") as f:
                 prc =  pickle.load(f)
         else:

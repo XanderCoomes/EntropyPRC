@@ -46,7 +46,8 @@ class PRC:
         return permuted_codeword
     
     def calc_threshold(self, false_positive_rate):
-        return (0.5 - (self.num_parity_checks ** (-0.25))) * self.num_parity_checks; 
+        threshold = (0.5 - (self.num_parity_checks ** (-0.25))) * self.num_parity_checks; 
+        return max(0, threshold)
 
     def decode(self, bit_str, false_positive_rate):
         threshold = self.calc_threshold(false_positive_rate)
@@ -60,7 +61,7 @@ class PRC:
         print("failed parity checks: ", failed_parity_checks)
 
 
-        if(failed_parity_checks < threshold):
+        if(failed_parity_checks <= threshold):
             return True;
         else:
             return False; 

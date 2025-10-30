@@ -17,7 +17,6 @@ class Sampler:
         logits = self.apply_temperature(logits)
         probs = self.softmax(logits)
         probs = self.apply_top_p(probs)
-        probs = probs.squeeze(0)
         return probs, past_key_vals
         
     def calc_logits(self, generated_token_ids, past_key_vals): 
@@ -30,10 +29,11 @@ class Sampler:
                 prev_token_id = generated_token_ids[:, -1:]
                 out = self.model(input_ids = prev_token_id, past_key_values = past_key_vals, use_cache = True)
         logits = out.logits[:,-1,:]
+        logits = logits.squeeze(0)
         return logits, out.past_key_values
     
     def softmax(self, logits):
-        probs = F.softmax(logits, dim=-1)
+        probs = F.softmax(logits, dim = -1)
         return probs
 
     def sample(self, probs): 
@@ -43,7 +43,7 @@ class Sampler:
     
     def apply_repetition_penalty(self, generated_ids, logits):
         for token_id in set(generated_ids[0].tolist()):
-            logits[0, token_id] /= self.repetition_penalty
+            logits[token_id] /= self.repetition_penalty
         return logits
 
     def apply_temperature(self, logits):
@@ -51,7 +51,7 @@ class Sampler:
         return logits
 
     def apply_top_p(self, probs):
-        sorted_probs, sorted_idx = probs.sort(dim=-1, descending=True)
+        sorted_probs, sorted_idx = probs.sort(descending=True)
         cumsum = sorted_probs.cumsum(dim=-1)
 
         cutoff = torch.roll(cumsum > self.top_p, shifts=1, dims=-1)
@@ -60,14 +60,15 @@ class Sampler:
         mask = torch.zeros_like(probs, dtype=torch.bool).scatter(-1, sorted_idx, cutoff)
 
         filtered = probs.masked_fill(mask, 0.0)
-        return F.normalize(filtered, p=1, dim=-1)
+        return F.normalize(filtered, p = 1, dim = -1)
+    
 
     def text_to_ids(self, text): 
         token_ids = self.tokenizer.encode(text, return_tensors="pt")
         return token_ids
     
     def ids_to_text(self, token_ids): 
-        text = self.tokenizer.decode(token_ids[0].tolist(), skip_special_tokens=True, clean_up_tokenization_spaces=True)
+        text = self.tokenizer.decode(token_ids[0].tolist(), skip_special_tokens = False, clean_up_tokenization_spaces = False)
         return text
     
 

@@ -41,16 +41,17 @@ class WaterLLM:
     def gen_response(self, prompt, num_tokens, is_water):
         codeword = self.sample_codeword(num_tokens)
         generated_ids = self.sampler.text_to_ids(prompt)
-        prompt_tokens = generated_ids.squeeze(0).shape[0]
         past_key_values = None
         encoding_errors = 0
+        response = []
 
         for i in range(num_tokens):
             probs, past_key_values = self.sampler.calc_probs(generated_ids, past_key_values)
             if(is_water): 
                 probs = self.bias_probs(probs, codeword[i])
             token_id = self.sampler.sample(probs)
-            token = self.sampler.tokenizer.decode([token_id])
+            token = self.sampler.tokenizer.decode([token_id], skip_special_tokens = True)
+            response.append(token)
             generated_ids = torch.cat([generated_ids, torch.tensor([[token_id]])], dim=-1)
             if(self.hash_fn(token_id) == codeword[i]): 
                 self.print_green(token)
@@ -58,10 +59,10 @@ class WaterLLM:
                 self.print_red(token)
                 encoding_errors += 1
         
-        response = self.sampler.ids_to_text(generated_ids[:, prompt_tokens:])
         print("\n\nStatistics:")
         print(f"Encoding Error Rate: {encoding_errors / num_tokens:.2%}")
-        return response
+        return "".join(response)
+
 
     def detect_water (self, response): 
         generated_ids = self.sampler.text_to_ids(response)
@@ -73,7 +74,7 @@ class WaterLLM:
         bit_str = [self.hash_fn(generated_ids[i]) for i in range(codeword_len)]
         bit_str = np.fromiter(bit_str, dtype = np.uint8, count = codeword_len)
         prc = self.load_prc(codeword_len)
-        return prc.decode(bit_str, false_positive_rate = 0)
+        return prc.is_codeword(bit_str, false_positive_rate = 0.0)
 
     
     def prc_file_name(self, codeword_len):

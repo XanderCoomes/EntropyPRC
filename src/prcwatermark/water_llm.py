@@ -15,7 +15,7 @@ class WaterLLM:
         prc = self.load_prc(codeword_len)
         codeword = prc.encode(noise_rate = 0.0)
         return codeword
-    
+
     def bias_probs(self, probs, bit): 
         alphabet_size = probs.numel()
         hashes = torch.tensor([self.hash_fn(i) for i in range(alphabet_size)])
@@ -32,41 +32,39 @@ class WaterLLM:
 
         return probs
     
-    def print_green(self, token):
-        print(f"\033[42m{token}\033[0m", end = '', flush = True)
-
-    def print_red(self, token):
+    def print_token(self, token, color):
+        if(color == 'green'):
+            print(f"\033[42m{token}\033[0m", end = '', flush = True)
+        elif(color == 'red'):
             print(f"\033[41m{token}\033[0m", end = '', flush = True)
-        
+        else:
+            print(token, end = '', flush = True)
+    
+    
     def gen_response(self, prompt, num_tokens, is_water):
         codeword = self.sample_codeword(num_tokens)
         generated_ids = self.sampler.text_to_ids(prompt)
+        prompt_tokens = generated_ids.size(1)
         past_key_values = None
         encoding_errors = 0
-        response = []
-
-        for i in range(num_tokens):
+        for i in range (num_tokens):
             probs, past_key_values = self.sampler.calc_probs(generated_ids, past_key_values)
-            if(is_water): 
+            if(is_water):
                 probs = self.bias_probs(probs, codeword[i])
             token_id = self.sampler.sample(probs)
             token = self.sampler.tokenizer.decode([token_id], skip_special_tokens = True)
-            response.append(token)
             generated_ids = torch.cat([generated_ids, torch.tensor([[token_id]])], dim=-1)
             if(self.hash_fn(token_id) == codeword[i]): 
-                self.print_green(token)
+                self.print_token(token, color = 'green')
             else:
-                self.print_red(token)
+                self.print_token(token, color = 'red')
                 encoding_errors += 1
         
         print("\n\nStatistics:")
         print(f"Encoding Error Rate: {encoding_errors / num_tokens:.2%}")
-        return "".join(response)
+        return generated_ids[0, prompt_tokens:].tolist()
 
-
-    def detect_water (self, response): 
-        generated_ids = self.sampler.text_to_ids(response)
-        generated_ids = generated_ids.squeeze(0)
+    def detect_water (self, generated_ids): 
         codeword_len = len(generated_ids)
         if(self.prc_exists(codeword_len) == False):
             print(f"PRC of Codeword Length {codeword_len} does not exist.")

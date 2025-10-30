@@ -32,15 +32,6 @@ class Sampler:
         logits = logits.squeeze(0)
         return logits, out.past_key_values
     
-    def softmax(self, logits):
-        probs = F.softmax(logits, dim = -1)
-        return probs
-
-    def sample(self, probs): 
-        next_token = torch.multinomial(probs.float(), num_samples = 1) 
-        token_id = next_token.item()
-        return token_id
-    
     def apply_repetition_penalty(self, generated_ids, logits):
         for token_id in set(generated_ids[0].tolist()):
             logits[token_id] /= self.repetition_penalty
@@ -49,7 +40,11 @@ class Sampler:
     def apply_temperature(self, logits):
         logits = logits / self.temperature
         return logits
-
+    
+    def softmax(self, logits):
+        probs = F.softmax(logits, dim = -1)
+        return probs
+    
     def apply_top_p(self, probs):
         sorted_probs, sorted_idx = probs.sort(descending=True)
         cumsum = sorted_probs.cumsum(dim=-1)
@@ -61,6 +56,18 @@ class Sampler:
 
         filtered = probs.masked_fill(mask, 0.0)
         return F.normalize(filtered, p = 1, dim = -1)
+    
+    def calc_entropy(self, probs):
+        if torch.any(probs < 0):
+            raise ValueError("Probabilities must be non-negative.")
+        probs = probs[probs > 0]
+        entropy = -torch.sum(probs * torch.log2(probs))
+        return entropy
+
+    def sample(self, probs): 
+        next_token = torch.multinomial(probs.float(), num_samples = 1) 
+        token_id = next_token.item()
+        return token_id
     
     
     def text_to_ids(self, text): 

@@ -59,7 +59,7 @@ class PRC:
         return failed_parity_checks
 
     def is_codeword(self, bit_str, false_positive_rate):
-        print("#Parity Checks: ", self.num_parity_checks)
+        print("Parity Checks: ", self.num_parity_checks)
         threshold = self.calc_parity_check_threshold(false_positive_rate)
         print("Parity Check Threshold: ", threshold)
         failed_parity_checks = self.calc_failed_parity_checks(bit_str)

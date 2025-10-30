@@ -31,30 +31,36 @@ class WaterLLM:
         probs[~mask] = probs[~mask] * ((1 - biased_prob_sum) / (1 - unbiased_prob_sum))
 
         return probs
+    
+    def print_green(self, token):
+        print(f"\033[42m{token}\033[0m", end = '', flush = True)
+
+    def print_red(self, token):
+            print(f"\033[41m{token}\033[0m", end = '', flush = True)
         
     def gen_response(self, prompt, num_tokens, is_water):
         codeword = self.sample_codeword(num_tokens)
-        print(codeword)
         generated_ids = self.sampler.text_to_ids(prompt)
         prompt_tokens = generated_ids.squeeze(0).shape[0]
         past_key_values = None
-        encoding_error_rate = 0.0
+        encoding_errors = 0
 
         for i in range(num_tokens):
             probs, past_key_values = self.sampler.calc_probs(generated_ids, past_key_values)
             if(is_water): 
                 probs = self.bias_probs(probs, codeword[i])
-            next_token_id = self.sampler.sample(probs)
-            generated_ids = torch.cat([generated_ids, torch.tensor([[next_token_id]])], dim=-1)
-            next_token = self.sampler.tokenizer.decode([next_token_id])
-            if(self.hash_fn(next_token_id) == codeword[i]):
-                print(f"\033[42m{next_token}\033[0m", end = '', flush = True)
+            token_id = self.sampler.sample(probs)
+            token = self.sampler.tokenizer.decode([token_id])
+            generated_ids = torch.cat([generated_ids, torch.tensor([[token_id]])], dim=-1)
+            if(self.hash_fn(token_id) == codeword[i]): 
+                self.print_green(token)
             else:
-                encoding_error_rate += 1
-                print(f"\033[41m{next_token}\033[0m", end = '', flush = True)
+                self.print_red(token)
+                encoding_errors += 1
         
         response = self.sampler.ids_to_text(generated_ids[:, prompt_tokens:])
-        print(f"\nEncoding Error Rate: {encoding_error_rate / num_tokens:.2%} \n")
+        print("\n\nStatistics:")
+        print(f"Encoding Error Rate: {encoding_errors / num_tokens:.2%}")
         return response
 
     def detect_water (self, response): 
@@ -66,7 +72,6 @@ class WaterLLM:
             return False
         bit_str = [self.hash_fn(generated_ids[i]) for i in range(codeword_len)]
         bit_str = np.fromiter(bit_str, dtype = np.uint8, count = codeword_len)
-        print(bit_str)
         prc = self.load_prc(codeword_len)
         return prc.decode(bit_str, false_positive_rate = 0)
 

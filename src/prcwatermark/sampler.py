@@ -62,13 +62,13 @@ class Sampler:
         filtered = probs.masked_fill(mask, 0.0)
         return F.normalize(filtered, p = 1, dim = -1)
     
-
     def text_to_ids(self, text): 
-        token_ids = self.tokenizer.encode(text, return_tensors="pt")
-        return token_ids
+        input_batch = self.tokenizer(text, return_tensors = "pt", add_special_tokens = False)
+        generated_ids = input_batch["input_ids"]
+        return generated_ids
     
     def ids_to_text(self, token_ids): 
-        text = self.tokenizer.decode(token_ids[0].tolist(), skip_special_tokens = False, clean_up_tokenization_spaces = False)
+        text = self.tokenizer.decode(token_ids[0].tolist(), skip_special_tokens = True, clean_up_tokenization_spaces = False)
         return text
     
 

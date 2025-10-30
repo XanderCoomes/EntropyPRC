@@ -1,6 +1,7 @@
 # PRC
 numpy
 galois
+scipy
 
 
 # Sampler

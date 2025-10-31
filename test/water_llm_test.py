@@ -23,7 +23,7 @@ class WaterLLMTester:
 
 
 if __name__ == "__main__":
-    temperature = 1.8
+    temperature = 1.0
     repetition_penalty = 1.0
     top_p = 0.8
 
@@ -35,8 +35,8 @@ if __name__ == "__main__":
     key_folder = "./keys"
     llm = WaterLLM(sampler, hash_fn, sparsity_fn, key_folder)
     water_tester = WaterLLMTester(llm)
-    response = water_tester.test_generation("You area a helpful, educational assistant. Write a long essay on Abraham Lincoln. ", 100, True)
-    is_water = water_tester.test_detection(response)
+    generated_ids, high_entropy_positions = water_tester.test_generation("You area a helpful, educational assistant. Write a long essay on Abraham Lincoln. ", 100, True)
+    is_water = water_tester.test_detection(generated_ids, high_entropy_positions)
     if(is_water):
         print("Watermark Detected.")
     else: 

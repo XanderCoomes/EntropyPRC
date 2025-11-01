@@ -62,10 +62,14 @@ class Sampler:
         token_id = next_token.item()
         return token_id
     
-    def text_to_ids(self, text): 
+    def txt_to_ids(self, text): 
         input_batch = self.tokenizer(text, return_tensors = "pt", add_special_tokens = False)
         generated_ids = input_batch["input_ids"]
         return generated_ids
+    
+    def ids_to_txt(self, ids): 
+        text = self.tokenizer.decode(ids, skip_special_tokens = True)
+        return text
     
     
     

@@ -57,7 +57,7 @@ class PRC:
         return (1 - (1 - 2 * p) ** n) / 2
 
     def prob_codeword(self, bit_str, approx_noise_rate):
-        print("Estimated Noise Rate (Watermarked Distribution): ", approx_noise_rate)
+        print("Estimated Noise Rate: ", approx_noise_rate)
         print("Parity Checks: ", self.num_parity_checks)
         failed_checks = self.calc_failed_parity_checks(bit_str)
         print("Failed Parity Checks: ", failed_checks)

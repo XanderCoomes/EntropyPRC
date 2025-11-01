@@ -7,7 +7,7 @@ class SamplerTester:
     def __init__(self, sampler): 
         self.sampler = sampler
     def test_sampling(self):
-        generated_ids = self.sampler.text_to_ids("You are a helpful educational assistant, please write an essay on birds.")
+        generated_ids = self.sampler.txt_to_ids("You are a helpful educational assistant, please write an essay on birds.")
         past_key_values = None
         for _ in range(100):
             probs, past_key_values = self.sampler.calc_probs(generated_ids, past_key_values)
@@ -17,8 +17,8 @@ class SamplerTester:
             print(next_token, end = '', flush = True)
         print()
 
-        text = self.sampler.ids_to_text(generated_ids)
-        ids = self.sampler.text_to_ids(text)
+        text = self.sampler.ids_to_txt(generated_ids[0])
+        ids = self.sampler.txt_to_ids(text)
 
         assert(ids == generated_ids).all(), "Text to IDs conversion failed."
     

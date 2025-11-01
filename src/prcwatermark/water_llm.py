@@ -1,5 +1,6 @@
 import torch
 import math
+import numpy as np
 
 class WaterLLM: 
     def __init__(self, sampler, prc): 
@@ -8,22 +9,23 @@ class WaterLLM:
         self.prc = prc
 
         self.default_prompt = "You are an educational assistant. Please write a text that is informative and helpful."
-        self.entropy_threshold = 0.5
+        self.entropy_threshold = 0.7
     
     def hash_fn(self, token_id): 
         return token_id % 2
     
     def gen_response(self, prompt, is_water):
         codeword = self.prc.encode(noise_rate = 0.0)
-        main_generated_ids = self.sampler.text_to_ids(prompt)
-        mini_generated_ids = self.mini_sampler.text_to_ids(self.default_prompt)
+        main_generated_ids = self.sampler.txt_to_ids(prompt)
+        mini_generated_ids = self.mini_sampler.txt_to_ids(self.default_prompt)
         prompt_tokens = main_generated_ids.size(1)
-        main_key_vals, mini_key_vals = None
-
         high_entropy_tokens = 0
-        while len(high_entropy_tokens) < len(codeword):
+        main_key_vals = None
+        mini_key_vals = None
+        encoding_errors = 0
+        while high_entropy_tokens < len(codeword):
             main_probs, main_key_vals = self.sampler.calc_probs(main_generated_ids, main_key_vals)
-            mini_probs, mini_key_vals = self.mini_model.calc_probs(mini_generated_ids, mini_key_vals)
+            mini_probs, mini_key_vals = self.mini_sampler.calc_probs(mini_generated_ids, mini_key_vals)
             if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold):
                 if(is_water): 
                     main_probs = self.bias_probs(main_probs, codeword[high_entropy_tokens])
@@ -31,17 +33,37 @@ class WaterLLM:
         
             token_id = self.sampler.sample(main_probs)
             token = self.sampler.tokenizer.decode([token_id], skip_special_tokens = True)
-            print(token)
+            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold and self.hash_fn(token_id) != codeword[high_entropy_tokens - 1]): 
+                encoding_errors += 1
+            print(token, end = '', flush = True)
             main_generated_ids = torch.cat([main_generated_ids, torch.tensor([[token_id]])], dim=-1)
             mini_generated_ids = torch.cat([mini_generated_ids, torch.tensor([[token_id]])], dim=-1)
         
-        response = self.sampler.ids_to_text(main_generated_ids[0, prompt_tokens:].tolist())
+        print("\n\n")
+        response = self.sampler.ids_to_txt(main_generated_ids[0, prompt_tokens:].tolist())
+        print(f"Encoding Error Rate: {encoding_errors / len(codeword)}")
+
         return response
 
+    def recover_bit_str(self, response): 
+        codeword = []
+        mini_generated_ids = self.mini_sampler.txt_to_ids(self.default_prompt)
+        main_generated_ids = self.sampler.txt_to_ids(response)
+        mini_key_vals = None
+        for i in range(main_generated_ids.size(1)):
+            mini_probs, mini_key_vals = self.mini_sampler.calc_probs(mini_generated_ids, mini_key_vals)
+            token_id = main_generated_ids[0, i].item()
+            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold):
+                codeword.append(self.hash_fn(token_id))
+            mini_generated_ids = torch.cat([mini_generated_ids, torch.tensor([[token_id]])], dim=-1)
+        return codeword
 
     def prob_water(self, response): 
-        pass
-
+        bit_str = self.recover_bit_str(response)
+        bit_str = np.fromiter(bit_str, dtype = np.uint8, count = len(bit_str))
+        noise_rate = self.calc_approx_error_rate()
+        return self.prc.prob_codeword(bit_str, noise_rate)
+        
     def binary_entropy(self, p):
         if p <= 0.0 or p >= 1.0:
             return 0.0
@@ -55,6 +77,10 @@ class WaterLLM:
         entropy = self.binary_entropy(p)
         return entropy
     
+    def calc_approx_error_rate(self): 
+        p = self.p_given_entropy(self.entropy_threshold)
+        beta = 0.5 - p
+        return beta / 2
 
     def bias_probs(self, probs, bit): 
         alphabet_size = probs.numel()

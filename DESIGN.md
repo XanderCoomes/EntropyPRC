@@ -42,7 +42,6 @@ Fields
  - sampler
  - prc
  - majority_encoder
- - hash_function
  - entropy_threshold
 
 Methods

@@ -1,4 +1,4 @@
-from prcwatermark.water_llm1 import WaterLLM
+from prcwatermark.water_llm import WaterLLM
 from prcwatermark.sampler import Sampler
 from prcwatermark.prc import PRC
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -21,9 +21,10 @@ if __name__ == "__main__":
     llm = WaterLLM(sampler, prc)
 
     prompt = "You are an educational assistant. Please write a text that is informative and helpful, explaining the trolley problem in depth."
-    is_water = True
-    llm.gen_response(prompt, is_water)
-    
+    is_water = False
+    response = llm.gen_response(prompt, is_water)
+    prob_water = llm.prob_water(response)
+    print("Probability Watermarked:", prob_water)
     
     
 

@@ -56,19 +56,11 @@ class Sampler:
 
         filtered = probs.masked_fill(mask, 0.0)
         return F.normalize(filtered, p = 1, dim = -1)
-    
-    def calc_entropy(self, probs):
-        if torch.any(probs < 0):
-            raise ValueError("Probabilities must be non-negative.")
-        probs = probs[probs > 0]
-        entropy = -torch.sum(probs * torch.log2(probs))
-        return entropy
 
     def sample(self, probs): 
         next_token = torch.multinomial(probs.float(), num_samples = 1) 
         token_id = next_token.item()
         return token_id
-    
     
     def text_to_ids(self, text): 
         input_batch = self.tokenizer(text, return_tensors = "pt", add_special_tokens = False)

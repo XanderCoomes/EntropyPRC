@@ -40,13 +40,19 @@ Methods
 WaterLLM Class: 
 Fields
  - sampler
+ - prc
+ - majority_encoder
+ - hash_function
+ - entropy_threshold
 
 Methods
  - bias_probs(probs, hash_func, bit) --> probs
  - token_hash(tokens, hash_func) --> bit_string
- - gen_response(prompt, num_tokens, water_parameters, sampling_parameters) --> tokens 
-    - prompt_to_tokens(prompt) --> tokens
- - detect_water(output, water_parmeters, sampling_parameters) --> is_watermarked
+ - entropy_threshold() --> alpha
+ - determine_entropy(tokens)
+ - gen_response(prompt) --> tokens 
+ - detect_water(output, water_parmeters, sampling_parameters) --> prob_watermarked
+
 
 
 

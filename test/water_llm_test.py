@@ -1,4 +1,4 @@
-from prcwatermark.water_llm import WaterLLM
+from prcwatermark.water_llm1 import WaterLLM
 from prcwatermark.sampler import Sampler
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import numpy as np
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     sampler = Sampler(model, tokenizer, temperature, repetition_penalty, top_p)
 
     key_folder = "./keys"
-    entropy_threshold = 0.5
+    entropy_threshold = 0.7
     llm = WaterLLM(sampler, hash_fn, sparsity_fn, entropy_threshold, key_folder)
     water_tester = WaterLLMTester(llm)
     is_watermarked = True
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         print("Watermarked Response:")
     else: 
         print("Dry Response:")
-    generated_ids, high_entropy_positions = water_tester.test_generation("You area a helpful, educational assistant. Write a long essay on Abraham Lincoln. ", 60, is_watermarked)
+    generated_ids, high_entropy_positions = water_tester.test_generation("You area a helpful, educational assistant. Write a long essay on Abraham Lincoln. ", 63, is_watermarked)
    
     prob_water = water_tester.test_detection(generated_ids, high_entropy_positions)
     print("Probability Watermarked: ", prob_water)

@@ -2,7 +2,6 @@ import numpy as np
 import galois
 from scipy.stats import binom
 
-
 GF = galois.GF(2)
 
 class PRC:
@@ -46,10 +45,6 @@ class PRC:
         permuted_codeword = codeword[self.permutation]
         return permuted_codeword
     
-    def calc_parity_check_threshold(self, false_positive_rate):
-        threshold = (0.5 - (self.num_parity_checks ** (-0.25))) * self.num_parity_checks; 
-        return max(0, int(threshold))
-    
     def calc_failed_parity_checks(self, bit_str): 
         inv_perm = np.empty_like(self.permutation)
         inv_perm[self.permutation] = np.arange(len(self.permutation))   
@@ -58,29 +53,18 @@ class PRC:
         failed_parity_checks = np.sum ((self.parity_check_matrix @ permuted_bit_str) == 1)
         return failed_parity_checks
 
-    def is_codeword(self, bit_str, false_positive_rate):
-        print("Parity Checks: ", self.num_parity_checks)
-        threshold = self.calc_parity_check_threshold(false_positive_rate)
-        print("Parity Check Threshold: ", threshold)
-        failed_parity_checks = self.calc_failed_parity_checks(bit_str)
-        print("Failed Parity Checks: ", failed_parity_checks)
-        if(failed_parity_checks <= threshold):
-            return True;
-        else:
-            return False; 
-
     def prob_binom_odd(self, n, p):
         return (1 - (1 - 2 * p) ** n) / 2
 
-    def prob_codeword(self, bit_str, estimated_noise_rate):
-        print("Estimated Noise Rate: ", estimated_noise_rate)
+    def prob_codeword(self, bit_str, approx_noise_rate):
+        print("Estimated Noise Rate (Watermarked Distribution): ", approx_noise_rate)
         print("Parity Checks: ", self.num_parity_checks)
         failed_checks = self.calc_failed_parity_checks(bit_str)
         print("Failed Parity Checks: ", failed_checks)
 
 
         fail_prob_dry = self.prob_binom_odd(self.sparsity, 0.5)
-        fail_prob_water = self.prob_binom_odd(self.sparsity, estimated_noise_rate)
+        fail_prob_water = self.prob_binom_odd(self.sparsity, approx_noise_rate)
 
         prob_failed_checks_given_dry   = binom.pmf(failed_checks, self.num_parity_checks, fail_prob_dry)
         prob_failed_checks_given_water = binom.pmf(failed_checks, self.num_parity_checks, fail_prob_water)

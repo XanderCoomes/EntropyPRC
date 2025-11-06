@@ -17,11 +17,11 @@ if __name__ == "__main__":
     sampler = Sampler(model, tokenizer, temperature, repetition_penalty, top_p)
 
 
-    prc = PRC(60, sparsity_fn)
+    prc = PRC(20, sparsity_fn)
     llm = WaterLLM(sampler, prc)
 
     prompt = "You are an educational assistant. Please write a text that is informative and helpful, explaining the trolley problem in depth."
-    is_water = False
+    is_water = True
     response = llm.gen_response(prompt, is_water)
     prob_water = llm.prob_water(response)
     print("Probability Watermarked:", prob_water)

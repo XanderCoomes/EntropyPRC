@@ -9,7 +9,8 @@ class WaterLLM:
         self.prc = prc
 
         self.default_prompt = "You are an educational assistant. Please write a text that is informative and helpful."
-        self.entropy_threshold = 0.7
+        self.entropy_threshold = 0.9
+        self.startup_tokens = 0
     
     def hash_fn(self, token_id): 
         return token_id % 2
@@ -26,16 +27,19 @@ class WaterLLM:
         while high_entropy_tokens < len(codeword):
             main_probs, main_key_vals = self.sampler.calc_probs(main_generated_ids, main_key_vals)
             mini_probs, mini_key_vals = self.mini_sampler.calc_probs(mini_generated_ids, mini_key_vals)
-            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold):
+            print("mini model token entropy: ", self.token_hash_entropy(mini_probs))
+            print("main model token entropy: ", self.token_hash_entropy(main_probs))
+            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold and mini_generated_ids.size(1) > self.startup_tokens):
                 if(is_water): 
                     main_probs = self.bias_probs(main_probs, codeword[high_entropy_tokens])
                 high_entropy_tokens += 1
         
             token_id = self.sampler.sample(main_probs)
             token = self.sampler.tokenizer.decode([token_id], skip_special_tokens = True)
-            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold and self.hash_fn(token_id) != codeword[high_entropy_tokens - 1]): 
+            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold and self.hash_fn(token_id) != codeword[high_entropy_tokens - 1] and mini_generated_ids.size(1) > self.startup_tokens): 
                 encoding_errors += 1
-            print(token, end = '', flush = True)
+            # print(token, end = '', flush = True)
+            print("Token: ", token, " Token ID: ", token_id)
             main_generated_ids = torch.cat([main_generated_ids, torch.tensor([[token_id]])], dim=-1)
             mini_generated_ids = torch.cat([mini_generated_ids, torch.tensor([[token_id]])], dim=-1)
         
@@ -45,18 +49,30 @@ class WaterLLM:
 
         return response
 
-    def recover_bit_str(self, response): 
-        codeword = []
+    def high_entropy_mask(self, response): 
         mini_generated_ids = self.mini_sampler.txt_to_ids(self.default_prompt)
         main_generated_ids = self.sampler.txt_to_ids(response)
+        mask = torch.zeros(main_generated_ids.size(1), dtype = torch.bool)
         mini_key_vals = None
         for i in range(main_generated_ids.size(1)):
             mini_probs, mini_key_vals = self.mini_sampler.calc_probs(mini_generated_ids, mini_key_vals)
             token_id = main_generated_ids[0, i].item()
-            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold):
-                codeword.append(self.hash_fn(token_id))
+            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold and mini_generated_ids.size(1) > self.startup_tokens):
+                mask[i] = True
             mini_generated_ids = torch.cat([mini_generated_ids, torch.tensor([[token_id]])], dim=-1)
-        return codeword
+        return mask
+    
+    def recover_bit_str(self, response):
+        mask = self.high_entropy_mask(response) 
+        bits = []
+        main_generated_ids = self.sampler.txt_to_ids(response)
+        for i in range(main_generated_ids.size(1)):
+            if(mask[i]):
+                token_id = main_generated_ids[0, i].item()
+                bits.append(self.hash_fn(token_id))
+
+        return bits
+    
 
     def prob_water(self, response): 
         bit_str = self.recover_bit_str(response)

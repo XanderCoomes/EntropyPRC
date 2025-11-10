@@ -8,9 +8,8 @@ class PRC:
     def __init__(self, codeword_len, sparsity_fn): 
         self.codeword_len = codeword_len
         self.sparsity = sparsity_fn(codeword_len)
-        self.secret_len = pow(self.sparsity, 2)
-        self.num_parity_checks = int(0.99 * self.codeword_len)
-
+        self.secret_len = int(np.log2(codeword_len) ** 2)
+        self.num_parity_checks = int(0.9 * self.codeword_len)
         self.gen_key()
 
     def gen_key(self):
@@ -18,6 +17,8 @@ class PRC:
         self.sample_generator_matrix()
         self.one_time_pad = GF.Random(self.codeword_len)
         self.permutation = np.random.permutation(self.codeword_len)
+        print(GF(self.parity_check_matrix))
+        print(GF(self.generator_matrix))
 
     def sample_parity_check_matrix(self): 
         self.parity_check_matrix = np.zeros((self.num_parity_checks, self.codeword_len), dtype = int)
@@ -63,7 +64,7 @@ class PRC:
         print("Parity Checks: ", self.num_parity_checks)
         print("Failed Parity Checks: ", failed_checks)
 
-        fail_prob_dry = self.prob_binom_odd(self.sparsity, 0.5)
+        fail_prob_dry = 0.5
         fail_prob_water = self.prob_binom_odd(self.sparsity, approx_noise_rate)
 
         prob_failed_checks_given_dry   = binom.pmf(failed_checks, self.num_parity_checks, fail_prob_dry)
@@ -72,11 +73,30 @@ class PRC:
         prob_codeword = prob_failed_checks_given_water / (prob_failed_checks_given_dry + prob_failed_checks_given_water)
 
         return prob_codeword
+    
+    def calc_threshold(self, false_positive_rate): 
+        fail_prob_dry = 0.5
+        threshold = self.num_parity_checks 
+        while(True):
+            prob = binom.cdf(threshold, self.num_parity_checks, fail_prob_dry)
+            if(prob <= false_positive_rate):
+                break
+            else:
+                threshold -= 1
+        return threshold 
+    
+    def threshold_decode(self, bit_str, false_postive_rate): 
+        threshold = self.calc_threshold(false_postive_rate)
+        print("Decoding Threshold: ", threshold)
+        failed_checks = self.calc_failed_parity_checks(bit_str)
+        if(failed_checks > threshold):
+            return False
+        return True
+
 
 
 
         
-
 
 
 

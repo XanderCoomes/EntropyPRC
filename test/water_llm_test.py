@@ -5,7 +5,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import numpy as np
 
 def sparsity_fn(codeword_len):
-    log_base = 5
+    log_base = 3
     return int(np.log2(codeword_len) / np.log2(log_base))
 
 if __name__ == "__main__":
@@ -21,10 +21,11 @@ if __name__ == "__main__":
     prc = PRC(63, sparsity_fn)
     llm = WaterLLM(sampler, prc)
 
-    prompt = "You are an educational assistant. Please write a text that is informative and helpful: a short essay on arguments in favor of free will."
+    prompt = "You are an educational assistant. Please write a text that is informative and helpful. Write an essay on the use of AI in education."
     is_water = True
+    false_positive_rate = 0.01
     response = llm.gen_response(prompt, is_water)
-    prob_water = llm.prob_water(response)
+    prob_water = llm.detect_water(response, 0.01)
     print("Probability Watermarked:", prob_water)
     
     

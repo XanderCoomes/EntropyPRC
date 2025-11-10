@@ -7,8 +7,7 @@ class WaterLLM:
         self.sampler = sampler
         self.mini_sampler = sampler
         self.prc = prc
-
-        self.default_prompt = "You are an educational assistant. Please write a text that is informative and helpful on free will"
+        self.default_prompt = "You are an educational assistant. Please write a text that is informative and helpful."
         self.entropy_threshold = 0.8
         self.startup_tokens = 100
     
@@ -49,6 +48,7 @@ class WaterLLM:
     def high_entropy_mask(self, response): 
         mini_generated_ids = self.mini_sampler.txt_to_ids(self.default_prompt)
         main_generated_ids = self.sampler.txt_to_ids(response)
+        print("Response Length: ", main_generated_ids.size(1))
         mask = torch.zeros(main_generated_ids.size(1), dtype = torch.bool)
         mini_key_vals = None
         for i in range(main_generated_ids.size(1)):
@@ -71,11 +71,16 @@ class WaterLLM:
         return bits
     
 
-    def prob_water(self, response): 
+    def detect_water(self, response, false_positive_rate): 
         bit_str = self.recover_bit_str(response)
         bit_str = np.fromiter(bit_str, dtype = np.uint8, count = len(bit_str))
         noise_rate = self.calc_approx_error_rate()
-        return self.prc.prob_codeword(bit_str, noise_rate)
+        prob_water = self.prc.prob_codeword(bit_str, noise_rate)
+        false_positive_rates = [0.0001, 0.001, 0.01,0.02, 0.03,0.04,0.05]
+        for fpr in false_positive_rates:
+            is_water = self.prc.threshold_decode(bit_str, fpr)
+            print(f"False Positive Rate: {fpr}, Is Watermarked: {is_water}")
+        return prob_water
         
     def binary_entropy(self, p):
         if p <= 0.0 or p >= 1.0:
@@ -88,6 +93,11 @@ class WaterLLM:
         mask = (hashes == 0)
         p = probs[mask].sum().item()
         entropy = self.binary_entropy(p)
+        return entropy
+    
+    def entropy(self, probs): 
+        log_probs = torch.log2(probs + 1e-12)
+        entropy = -torch.sum(probs * log_probs).item()
         return entropy
     
     def calc_approx_error_rate(self): 

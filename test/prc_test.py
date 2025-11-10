@@ -2,7 +2,7 @@ from prcwatermark.prc import PRC
 import numpy as np
 
 def sparsity_fn(codeword_len):
-    log_base = 4
+    log_base = 2
     return int(np.log2(codeword_len) / np.log2(log_base))
 
 class PRCTester:
@@ -22,30 +22,16 @@ class PRCTester:
          print(f"Threshold Decode Result: {prob_codeword}")
 
 if __name__ == "__main__":
-    codeword_len = 64
+    codeword_len = 340
     prc = PRC(codeword_len, sparsity_fn)
     tester = PRCTester(prc)
     tester.test_key_gen()
 
-    print("Test 1:")
-    noise_rate = 0.0
-    tester.test_encode_decode(noise_rate)
-    print()
-
-    print("Test 2:")
-    noise_rate = 0.15
-    tester.test_encode_decode(noise_rate)
-    print()
-
-    print("Test 3:")
-    noise_rate = 0.41
-    tester.test_encode_decode(noise_rate)
-    print()
-
-    print("Test 4:")
-    noise_rate = 0.0
+    noise_rate = 0.10
     tester.test_threshold_decode(noise_rate, false_positive_rate = 0.01)
-    print()
+    tester.test_threshold_decode(noise_rate, false_positive_rate = 0.02)
+    tester.test_threshold_decode(noise_rate, false_positive_rate = 0.05)
+    tester.test_threshold_decode(noise_rate, false_positive_rate = 0.10)
 
 
 

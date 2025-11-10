@@ -5,7 +5,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import numpy as np
 
 def sparsity_fn(codeword_len):
-    log_base = 3
+    log_base = 2
     return int(np.log2(codeword_len) / np.log2(log_base))
 
 if __name__ == "__main__":
@@ -18,15 +18,32 @@ if __name__ == "__main__":
     sampler = Sampler(model, tokenizer, temperature, repetition_penalty, top_p)
 
 
-    prc = PRC(63, sparsity_fn)
-    llm = WaterLLM(sampler, prc)
+    codeword_len = 64
+    prc = PRC(codeword_len, sparsity_fn)
+    startup_tokens = 100
+    entropy_thresholds = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    trials_per_threshold = 10
 
     prompt = "You are an educational assistant. Please write a text that is informative and helpful. Write an essay on the use of AI in education."
     is_water = True
-    false_positive_rate = 0.01
-    response = llm.gen_response(prompt, is_water)
-    prob_water = llm.detect_water(response, 0.01)
-    print("Probability Watermarked:", prob_water)
+    avg_tokens_generated = np.zeros_like(entropy_thresholds, dtype = float)
+    avg_encoding_error_rate = np.zeros_like(entropy_thresholds, dtype = float)
+    for i, entropy_threshold in enumerate(entropy_thresholds):
+        print(f"Testing Entropy Threshold: {entropy_threshold}")
+        for j in range(trials_per_threshold):
+            print(f" Trial {j + 1}/{trials_per_threshold}")
+            llm = WaterLLM(sampler, prc, entropy_threshold, startup_tokens)
+            response, encoding_error_rate, num_tokens = llm.gen_response(prompt, is_water)
+            avg_tokens_generated[i] += num_tokens - startup_tokens
+            avg_encoding_error_rate[i] += encoding_error_rate
+        avg_tokens_generated[i] /= trials_per_threshold
+        avg_encoding_error_rate[i] /= trials_per_threshold
+    
+    avg_token_expansion_rate = avg_tokens_generated / codeword_len
+    
+    print("Entropy Thresholds: ", entropy_thresholds)
+    print("Average Tokens Expansion Rate: ", avg_token_expansion_rate)
+    print("Average Encoding Error Rates: ", avg_encoding_error_rate)
     
     
 

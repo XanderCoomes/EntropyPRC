@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     codeword_len = 64
     prc = PRC(codeword_len, sparsity_fn)
-    startup_tokens = 100
+    startup_tokens = 150
     entropy_thresholds = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     trials_per_threshold = 10
 

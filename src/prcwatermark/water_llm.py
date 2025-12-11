@@ -14,43 +14,41 @@ class WaterLLM:
     def hash_fn(self, token_id): 
         return token_id % 2
     
+    def hash_fn(self, token_id, probs): 
+        return token_id  % 2
+    
     def gen_response(self, prompt, is_water):
         codeword = self.prc.encode(noise_rate = 0.0)
         main_generated_ids = self.sampler.txt_to_ids(prompt)
-        mini_generated_ids = self.mini_sampler.txt_to_ids(self.default_prompt)
         prompt_tokens = main_generated_ids.size(1)
-        default_prompt_tokens = mini_generated_ids.size(1)
         high_entropy_tokens = 0
         main_key_vals = None
-        mini_key_vals = None
         encoding_errors = 0
         while high_entropy_tokens < len(codeword):
             main_probs, main_key_vals = self.sampler.calc_probs(main_generated_ids, main_key_vals)
-            mini_probs, mini_key_vals = self.mini_sampler.calc_probs(mini_generated_ids, mini_key_vals)
-            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold and mini_generated_ids.size(1) >= self.startup_tokens + default_prompt_tokens):
+            if(self.token_hash_entropy(main_probs) >= self.entropy_threshold):
                 if(is_water): 
                     main_probs = self.bias_probs(main_probs, codeword[high_entropy_tokens])
                 high_entropy_tokens += 1
         
             token_id = self.sampler.sample(main_probs)
             token = self.sampler.tokenizer.decode([token_id], skip_special_tokens = True)
-            if(self.token_hash_entropy(mini_probs) >= self.entropy_threshold and self.hash_fn(token_id) != codeword[high_entropy_tokens - 1] and mini_generated_ids.size(1) >= self.startup_tokens + default_prompt_tokens): 
+            if(self.token_hash_entropy(main_probs) >= self.entropy_threshold and self.hash_fn(token_id) != codeword[high_entropy_tokens - 1] and mini_generated_ids.size(1) >= prompt_tokens): 
                 encoding_errors += 1
             print(token, end = '', flush = True)
             main_generated_ids = torch.cat([main_generated_ids, torch.tensor([[token_id]])], dim=-1)
             mini_generated_ids = torch.cat([mini_generated_ids, torch.tensor([[token_id]])], dim=-1)
         
-        print()
         num_tokens_generated = main_generated_ids.size(1) - prompt_tokens
-        print(f"Number of Tokens Generated: {num_tokens_generated}")
-        response = self.sampler.ids_to_txt(main_generated_ids[0, prompt_tokens:].tolist())
         encoding_error_rate = encoding_errors / len(codeword)
-        print(f"Encoding Error Rate: {encoding_error_rate}\n")
 
-        return response, encoding_error_rate, num_tokens_generated
 
-    def high_entropy_mask(self, response): 
-        mini_generated_ids = self.mini_sampler.txt_to_ids(self.default_prompt)
+        return self.sampler.ids_to_txt(main_generated_ids[0, prompt_tokens:].tolist())
+        
+        
+
+    def high_entropy_mask(self, response, prompt): 
+        mini_generated_ids = self.mini_sampler.txt_to_ids(prompt)
         main_generated_ids = self.sampler.txt_to_ids(response)
         print("Response Length: ", main_generated_ids.size(1))
         mask = torch.zeros(main_generated_ids.size(1), dtype = torch.bool)
@@ -63,8 +61,8 @@ class WaterLLM:
             mini_generated_ids = torch.cat([mini_generated_ids, torch.tensor([[token_id]])], dim=-1)
         return mask
     
-    def recover_bit_str(self, response):
-        mask = self.high_entropy_mask(response) 
+    def recover_bit_str(self, response, prompt):
+        mask = self.high_entropy_mask(response, prompt) 
         bits = []
         main_generated_ids = self.sampler.txt_to_ids(response)
         for i in range(main_generated_ids.size(1)):
@@ -75,16 +73,22 @@ class WaterLLM:
         return bits
     
 
-    def detect_water(self, response): 
-        bit_str = self.recover_bit_str(response)
+    def detect_water(self, response, prompt): 
+        print("-------------------------------------------")
+        if(prompt == None): 
+            prompt = self.default_prompt
+        bit_str = self.recover_bit_str(response, prompt)
         bit_str = np.fromiter(bit_str, dtype = np.uint8, count = len(bit_str))
         noise_rate = self.calc_approx_error_rate()
-        prob_water = self.prc.prob_codeword(bit_str, noise_rate)
+        print("-------------------------------------------")
+        # prob_water = self.prc.prob_codeword(bit_str, noise_rate)
         false_positive_rates = [0.0001, 0.001, 0.01,0.02, 0.03,0.04,0.05]
         for fpr in false_positive_rates:
+            print(f"False Positive Rate : {fpr}")
             is_water = self.prc.threshold_decode(bit_str, fpr)
-            print(f"False Positive Rate: {fpr}, Is Watermarked: {is_water}")
-        return prob_water
+            print(f"Watermark Detected  : {is_water}")
+            print("-------------------------------------------")
+        # return prob_water
         
     def binary_entropy(self, p):
         if p <= 0.0 or p >= 1.0:

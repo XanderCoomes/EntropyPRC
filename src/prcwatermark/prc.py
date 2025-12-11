@@ -20,8 +20,6 @@ class PRC:
         self.one_time_pad = GF.Random(self.codeword_len)
         self.permutation = np.random.permutation(self.codeword_len)
 
-        print("Parity Check Matrix:", self.parity_check_matrix)
-        print("Generator Matrix:", self.generator_matrix)
 
     def sample_parity_check_matrix(self): 
         self.parity_check_matrix = np.zeros((self.num_parity_checks, self.codeword_len), dtype = int)
@@ -90,8 +88,9 @@ class PRC:
     
     def threshold_decode(self, bit_str, false_postive_rate): 
         threshold = self.calc_threshold(false_postive_rate)
-        print("Decoding Threshold: ", threshold)
+        print("Decoding Threshold  :", threshold)
         failed_checks = self.calc_failed_parity_checks(bit_str)
+        print("Failed Parity Checks:", failed_checks)
         if(failed_checks > threshold):
             return False
         return True

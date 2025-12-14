@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 
 class Sampler: 
-    def __init__(self, model, tokenizer, temperature, repetition_penalty, top_p): 
+    def __init__(self, model, tokenizer, temperature, repetition_penalty, top_p, top_k): 
         self.model = model
         self.tokenizer = tokenizer
         self.device = model.device
@@ -10,11 +10,13 @@ class Sampler:
         self.temperature = temperature
         self.repetition_penalty = repetition_penalty
         self.top_p = top_p
+        self.top_k = top_k
 
     def calc_probs(self, generated_token_ids, past_key_vals):
         logits, past_key_vals = self.calc_logits(generated_token_ids, past_key_vals)
         logits = self.apply_repetition_penalty(generated_token_ids, logits)
         logits = self.apply_temperature(logits)
+        logits = self.apply_top_k(logits)
         probs = self.softmax(logits)
         probs = self.apply_top_p(probs)
         return probs, past_key_vals
@@ -39,6 +41,14 @@ class Sampler:
 
     def apply_temperature(self, logits):
         logits = logits / self.temperature
+        return logits
+    
+    def apply_top_k(self, logits):
+        if self.top_k <= 0 or self.top_k >= logits.numel():
+            return logits[logits != 0]
+        
+        cutoff = torch.topk(logits, self.top_k).values[-1]
+        logits[logits < cutoff] = -float('inf')
         return logits
     
     def softmax(self, logits):

@@ -26,12 +26,13 @@ if __name__ == "__main__":
     temperature = 1.5
     repetition_penalty = 1.0
     top_p = 0.8
+    top_k = 10
 
     model_id = "Qwen/Qwen3-4B-Instruct-2507"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(model_id, dtype = "auto", device_map = "auto")
 
-    sampler = Sampler(model, tokenizer, temperature, repetition_penalty, top_p)
+    sampler = Sampler(model, tokenizer, temperature, repetition_penalty, top_p, top_k)
     tester = SamplerTester(sampler)
     tester.test_sampling()
 

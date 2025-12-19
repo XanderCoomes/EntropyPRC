@@ -11,7 +11,7 @@ class PRC:
         self.codeword_len = codeword_len
         self.sparsity = sparsity_fn(codeword_len)
         self.secret_len = int(np.log2(codeword_len) ** 2)
-        self.num_parity_checks = int(0.99 * self.codeword_len)
+        self.num_parity_checks = int(0.9 * self.codeword_len)
         self.gen_key()
 
     def gen_key(self):
@@ -19,7 +19,6 @@ class PRC:
         self.sample_generator_matrix()
         self.one_time_pad = GF.Random(self.codeword_len)
         self.permutation = np.random.permutation(self.codeword_len)
-
 
     def sample_parity_check_matrix(self): 
         self.parity_check_matrix = np.zeros((self.num_parity_checks, self.codeword_len), dtype = int)
